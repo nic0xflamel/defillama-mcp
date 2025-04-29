@@ -8,17 +8,18 @@
     "crypto",
     "modelcontextprotocol"
   ],
-  "version": "0.1.6",
+  "version": "0.1.7",
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsc --build && echo \"#!/usr/bin/env node\" | cat - bin/scripts/start-server.js > temp && mv temp bin/scripts/start-server.js && chmod +x bin/scripts/start-server.js",
     "dev": "tsx watch scripts/start-server.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "start": "node bin/scripts/start-server.js"
   },
   "bin": {
-    "@nic0xflamel/coingecko-mcp-server": "./bin/scripts/start-server.js"
+    "coingecko-mcp-server": "./bin/scripts/start-server.js"
   },
   "files": [
     "bin",
