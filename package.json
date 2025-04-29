@@ -16,14 +16,14 @@
   },
   "types": "./build/src/index.d.ts",
   "scripts": {
-    "build": "tsc --build && chmod +x bin/cli.cjs",
+    "build": "tsc --build && chmod +x scripts/cli.cjs",
     "dev": "tsx watch scripts/start-server.ts",
     "test": "jest",
     "start": "node ./bin/scripts/start-server.js",
     "watch": "tsc --build --watch"
   },
   "bin": {
-    "coingecko-mcp-server": "./bin/cli.cjs"
+    "coingecko-mcp-server": "./scripts/cli.cjs"
   },
   "files": [
     "bin/",
