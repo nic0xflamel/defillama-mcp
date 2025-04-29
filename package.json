@@ -8,7 +8,7 @@
     "crypto",
     "modelcontextprotocol"
   ],
-  "version": "0.1.12",
+  "version": "0.1.13",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -27,8 +27,7 @@
     "coingecko-mcp-server": "./bin/cli.js"
   },
   "files": [
-    "build/",
-    "bin",
+    "bin/",
     "specs/",
     "README.md",
     "LICENSE",
