@@ -6,13 +6,8 @@ startCommand:
     # JSON Schema defining the configuration options for the MCP.
     type: object
     required: []
-    properties:
-      baseUrl:
-        type: string
-        description: Optional override of the default CoinGecko API base URL
+    properties: {}
   commandFunction:
     # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
     |-
-    (config) => { const args = [ '/usr/local/lib/node_modules/@nic0xflamel/coingecko-mcp-server/bin/scripts/start-server.js' ]; if(config.baseUrl) args.push('--base-url', config.baseUrl); return { command: 'node', args }; }
-  exampleConfig:
-    baseUrl: https://api.coingecko.com/api/v3
+    (config) => { const args = [ '/usr/local/lib/node_modules/@nic0xflamel/coingecko-mcp-server/bin/scripts/start-server.js' ]; return { command: 'node', args }; }
