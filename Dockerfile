@@ -25,12 +25,12 @@ RUN --mount=type=cache,target=/root/.npm npm link
 FROM node:20-slim
 
 # Copy built package from builder stage
-COPY scripts/notion-openapi.json /usr/local/scripts/
-COPY --from=builder /usr/local/lib/node_modules/@notionhq/notion-mcp-server /usr/local/lib/node_modules/@notionhq/notion-mcp-server
-COPY --from=builder /usr/local/bin/notion-mcp-server /usr/local/bin/notion-mcp-server
+COPY specs/coingecko.v3.openapi.json /usr/local/scripts/coingecko-v3-openapi.json
+COPY --from=builder /usr/local/lib/node_modules/@nic0xflamel/coingecko-mcp-server /usr/local/lib/node_modules/@nic0xflamel/coingecko-mcp-server
+COPY --from=builder /usr/local/bin/coingecko-mcp-server /usr/local/bin/coingecko-mcp-server
 
 # Set default environment variables
 ENV OPENAPI_MCP_HEADERS="{}"
 
 # Set entrypoint
-ENTRYPOINT ["notion-mcp-server"]
+ENTRYPOINT ["coingecko-mcp-server"]
