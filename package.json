@@ -8,18 +8,23 @@
     "crypto",
     "modelcontextprotocol"
   ],
-  "version": "0.1.9",
+  "version": "0.1.10",
   "license": "MIT",
   "type": "module",
+  "exports": {
+    ".": "./build/src/index.js"
+  },
+  "types": "./build/src/index.d.ts",
   "scripts": {
-    "build": "tsc --build && echo \"#!/usr/bin/env node\" | cat - bin/scripts/start-server.js > temp && mv temp bin/scripts/start-server.js && chmod +x bin/scripts/start-server.js",
+    "build": "tsc --build && chmod +x bin/cli.js",
     "dev": "tsx watch scripts/start-server.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test bin/__tests__/**/*.test.js",
     "prepare": "npm run build",
-    "start": "node bin/scripts/start-server.js"
+    "start": "node ./bin/scripts/start-server.js",
+    "watch": "tsc --build --watch"
   },
   "bin": {
-    "coingecko-mcp-server": "./bin/scripts/start-server.js"
+    "coingecko-mcp-server": "./bin/cli.js"
   },
   "files": [
     "bin",
@@ -59,7 +64,7 @@
   "description": "MCP server for the CoinGecko API (Public)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nic0xflamel/coingecko-mcp-server.git"
+    "url": "git+https://github.com/nic0flamel/notion-automation.git"
   },
   "author": "Nic Flamel",
   "bugs": {
