@@ -16,10 +16,10 @@
     "dev": "tsx watch scripts/start-server.ts"
   },
   "bin": {
-    "coingecko-mcp-server": "./build/scripts/start-server.js"
+    "@nic0xflamel/coingecko-mcp-server": "./bin/scripts/start-server.js"
   },
   "files": [
-    "build/",
+    "bin",
     "specs/",
     "README.md",
     "LICENSE",
