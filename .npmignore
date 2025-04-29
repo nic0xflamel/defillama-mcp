@@ -1,0 +1,22 @@
+# Build artifacts
+*.tsbuildinfo
+
+# Source files (we publish build/)
+src/
+
+# Dependencies
+node_modules/
+
+# Environment files
+.env*
+
+# Log files
+*.log
+
+# OS generated files
+.DS_Store
+
+# Test artifacts (if any)
+coverage/
+*.test.js
+*.test.ts 
