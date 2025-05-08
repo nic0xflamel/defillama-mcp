@@ -23,7 +23,7 @@
     "watch": "tsc --build --watch"
   },
   "bin": {
-    "defillama-mcp-server": "./scripts/cli.cjs"
+    "defillama-mcp-server": "scripts/cli.cjs"
   },
   "files": [
     "bin/",
