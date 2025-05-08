@@ -39,8 +39,8 @@ export class HttpClient {
       axiosConfigDefaults: {
         baseURL: config.baseUrl,
         headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'coingecko-mcp-server',
+          Accept: 'application/json',
+          'User-Agent': 'defillama-mcp-server',
           ...config.headers,
         },
       },
@@ -104,76 +104,114 @@ export class HttpClient {
     operation: OpenAPIV3.OperationObject & { method: string; path: string },
     params: Record<string, any> = {},
   ): Promise<HttpClientResponse<T>> {
-    const api = await this.api
-    const operationId = operation.operationId
-    if (!operationId) {
-      throw new Error('Operation ID is required')
-    }
+    const axios = await this.client.getAxiosInstance(); // Get the underlying Axios instance
 
     // Handle file uploads if present
     const formData = await this.prepareFileUpload(operation, params)
 
     // Separate parameters based on their location
-    const urlParameters: Record<string, any> = {}
-    const bodyParams: Record<string, any> = formData || { ...params }
+    const pathParams: Record<string, any> = {};
+    const queryParams: Record<string, any> = {};
+    let requestBody: any = formData || undefined; // Start with formData or undefined
+    const requestHeaders: Record<string, string> = formData ? formData.getHeaders() : {};
+
+    const processedParams = new Set<string>();
 
     // Extract path and query parameters based on operation definition
     if (operation.parameters) {
       for (const param of operation.parameters) {
-        if ('name' in param && param.name && param.in) {
-          if (param.in === 'path' || param.in === 'query') {
-            if (params[param.name] !== undefined) {
-              urlParameters[param.name] = params[param.name]
-              if (!formData) {
-                delete bodyParams[param.name]
+        if ('name' in param && param.name && params[param.name] !== undefined) {
+          if (param.in === 'path') {
+            pathParams[param.name] = params[param.name];
+            processedParams.add(param.name);
+          } else if (param.in === 'query') {
+            queryParams[param.name] = params[param.name];
+            processedParams.add(param.name);
+          } else if (param.in === 'header') {
+            requestHeaders[param.name] = params[param.name];
+            processedParams.add(param.name);
               }
+          // We ignore cookie parameters for typical server-side API calls
+        }
+      }
+    }
+
+    // Determine request body if not using formData
+    if (!formData) {
+      if (operation.requestBody) {
+        // If the schema expects an object, collect unprocessed params
+        // This assumes simple cases where top-level args match body properties
+        // or a single 'body' arg contains the object.
+        // More complex requestBody schemas might need more sophisticated mapping.
+        if (params['body']) { // Check if a specific 'body' argument exists
+            requestBody = params['body'];
+            processedParams.add('body');
+        } else {
+             // Collect remaining params as body properties
+            const bodyData: Record<string, any> = {};
+            for(const key in params) {
+                if (!processedParams.has(key)) {
+                    bodyData[key] = params[key];
+                }
             }
+            if (Object.keys(bodyData).length > 0) {
+                requestBody = bodyData;
+            }
+        }
+
+        // Set Content-Type for JSON if we have a body
+        if (requestBody) {
+            requestHeaders['Content-Type'] = 'application/json';
+        }
+
+      } else {
+        // If no requestBody is defined in OpenAPI, treat remaining params as query params (common for GET)
+        for (const key in params) {
+          if (!processedParams.has(key)) {
+            queryParams[key] = params[key];
           }
         }
       }
     }
 
-    // Add all parameters as url parameters if there is no requestBody defined
-    if (!operation.requestBody && !formData) {
-      for (const key in bodyParams) {
-        if (bodyParams[key] !== undefined) {
-          urlParameters[key] = bodyParams[key]
-          delete bodyParams[key]
-        }
-      }
-    }
-
-    const operationFn = (api as any)[operationId]
-    if (!operationFn) {
-      throw new Error(`Operation ${operationId} not found`)
+    // Construct the full URL
+    let url = operation.path;
+    for (const [key, value] of Object.entries(pathParams)) {
+      url = url.replace(`{${key}}`, encodeURIComponent(String(value)));
     }
 
     try {
-      // If we have form data, we need to set the correct headers
-      const hasBody = Object.keys(bodyParams).length > 0
-      const headers = formData
-        ? formData.getHeaders()
-        : { ...(hasBody ? { 'Content-Type': 'application/json' } : { 'Content-Type': null }) }
       const requestConfig = {
-        headers: {
-          ...headers,
-        },
-      }
+            method: operation.method.toUpperCase(),
+            url: url,
+            params: queryParams,
+            data: requestBody,
+            headers: requestHeaders,
+            // Ensure axios does not automatically transform binary data
+            ...(formData && { responseType: 'arraybuffer' as const }),
+        };
 
-      // first argument is url parameters, second is body parameters
-      const response = await operationFn(urlParameters, hasBody ? bodyParams : undefined, requestConfig)
+        const response = await axios.request(requestConfig);
 
       // Convert axios headers to Headers object
-      const responseHeaders = new Headers()
+        const responseHeaders = new Headers();
       Object.entries(response.headers).forEach(([key, value]) => {
-        if (value) responseHeaders.append(key, value.toString())
-      })
+            if (value) responseHeaders.append(key, value.toString());
+        });
+
+        // Handle potential binary data response if formData was used
+        let responseData = response.data;
+        if (formData && response.data instanceof ArrayBuffer) {
+            // Assuming binary response should be returned as base64 string or similar
+            // Adjust based on expected MCP client handling
+            responseData = Buffer.from(response.data).toString('base64'); 
+        }
 
       return {
-        data: response.data,
+            data: responseData,
         status: response.status,
         headers: responseHeaders,
-      }
+        };
     } catch (error: any) {
       if (error.response) {
         console.error('Error in http client', error)

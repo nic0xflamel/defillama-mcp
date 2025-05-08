@@ -44,7 +44,7 @@ async function loadOpenApiSpec(specPath: string, baseUrl: string | undefined): P
 
 export async function initProxy(specPath: string, baseUrl: string |undefined) {
   const openApiSpec = await loadOpenApiSpec(specPath, baseUrl)
-  const proxy = new MCPProxy('Notion API', openApiSpec)
+  const proxy = new MCPProxy('DefiLlama API', openApiSpec)
 
   return proxy
 }

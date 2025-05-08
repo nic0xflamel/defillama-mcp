@@ -26,14 +26,9 @@ function parseArgs(args: string[]): Record<string, string> {
 export async function startServer(args: string[] = process.argv.slice(2)) {
   const filename = fileURLToPath(import.meta.url)
   const directory = path.dirname(filename)
-  const specPath = path.resolve(directory, '../../specs/coingecko_openapi_v3.json')
+  const specPath = path.resolve(directory, '../../specs/defillama-api-spec.json')
   
-  const cliArgs = parseArgs(args);
-
-  // Prioritize CLI argument, then ENV var, then default (undefined)
-  const baseUrl = cliArgs['base-url'] ?? process.env.BASE_URL ?? undefined
-
-  const proxy = await initProxy(specPath, baseUrl)
+  const proxy = await initProxy(specPath, undefined /* baseUrl is now always undefined */)
   await proxy.connect(new StdioServerTransport())
 
   return proxy.getServer()

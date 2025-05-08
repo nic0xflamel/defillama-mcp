@@ -1,39 +1,54 @@
-# CoinGecko MCP Server
-[![smithery badge](https://smithery.ai/badge/@nic0xflamel/coingecko-mcp-server)](https://smithery.ai/server/@nic0xflamel/coingecko-mcp-server)
+# DefiLlama MCP Server
+[![smithery badge](https://smithery.ai/badge/@nic0xflamel/defillama-mcp-server)](https://smithery.ai/server/@nic0xflamel/defillama-mcp-server)
 
-This package provides a Model Context Protocol (MCP) server that acts as a proxy to the public CoinGecko API v3. It allows AI assistants (like Cursor) to interact with the CoinGecko API through the defined OpenAPI specification.
+This package provides a Model Context Protocol (MCP) server that acts as a proxy to the public DefiLlama API. It allows AI assistants (like Cursor) to interact with the DefiLlama API through the defined OpenAPI specification.
 
 ## Features
 
-*   Implements the Model Context Protocol for standardized communication.
-*   Uses the official [CoinGecko API v3](https://docs.coingecko.com/v3.0.1/reference/introduction).
-*   Parses the OpenAPI specification to dynamically generate API methods.
-*   Can be run locally and configured within environments like Cursor and Claude Desktop.
+*   Dynamically generates MCP tools from the DefiLlama OpenAPI specification.
+*   Uses the official [DefiLlama API](https://defillama.com/docs/api).
+*   Translates MCP `callTool` requests into HTTP requests to the DefiLlama API.
+*   Handles responses and errors from the API.
 
-## Installation
-### Installing via Smithery
+## Installation & Usage
 
-To install CoinGecko API Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@nic0xflamel/coingecko-mcp-server):
+### Using npx (Recommended for Clients like Cursor)
+
+Once published to npm, you can configure clients like Cursor to automatically download and run the server using `npx`. Add an entry to your client's MCP configuration (e.g., `mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "defillama": { 
+      "command": "npx",
+      "args": [
+        "-y", // Ensures the latest version is used without prompting
+        "@nic0xflamel/defillama-mcp-server"
+        // Add any server-specific arguments here if needed in the future
+      ]
+    }
+    // ... other servers
+  }
+}
+```
+*Replace `"defillama"` with your desired server name key.* 
+
+### Using Smithery (for Claude Desktop)
+
+To install automatically via [Smithery](https://smithery.ai/server/@nic0xflamel/defillama-mcp-server):
 
 ```bash
-npx -y @smithery/cli install @nic0xflamel/coingecko-mcp-server --client claude
+npx -y @smithery/cli install @nic0xflamel/defillama-mcp-server --client claude
 ```
 
-### Manual Installation
-    ```json
-    {
-      "mcpServers": {
-        "coingecko": {
-          "command": "npx",
-          "args": [
-            "-y",
-            "@nic0xflamel/coingecko-mcp-server"
-          ]
-        }
-      }
-    }
-    ```
+### Manual / Development
+
+1.  Clone the repository.
+2.  Run `npm install`.
+3.  Run `npm run build`.
+4.  Start the server: `npm start` or use the linked command `defillama-mcp-server` (after running `npm link`).
+5.  Configure your MCP client to connect via `stdio` using the appropriate command (see `npx` example above, adapting for local paths or linked command if not using `npx`).
 
 ## License
 
-MIT (You should add a LICENSE file to the project root or this directory)
+MIT (A LICENSE file exists in the project root)

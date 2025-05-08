@@ -5,7 +5,7 @@ import type { JSONSchema7 as IJsonSchema } from 'json-schema'
 import type { ChatCompletionTool } from 'openai/resources/chat/completions'
 import type { Tool } from '@anthropic-ai/sdk/resources/messages/messages'
 
-type NewToolMethod = {
+export type NewToolMethod = {
   name: string
   description: string
   inputSchema: IJsonSchema & { type: 'object' }
@@ -166,50 +166,69 @@ export class OpenAPIToMCPConverter {
   }
 
   convertToMCPTools(): {
-    tools: Record<string, { methods: NewToolMethod[] }>
+    tools: NewToolMethod[]
     openApiLookup: Record<string, OpenAPIV3.OperationObject & { method: string; path: string }>
     zip: Record<string, { openApi: OpenAPIV3.OperationObject & { method: string; path: string }; mcp: NewToolMethod }>
   } {
-    const apiName = 'API'
-    // Define the list of allowed operation IDs
-    const allowedOperationIds = new Set([
-        'simple-price',
-        'coins-list',
-        'coins-id-ohlc',
-        'coins-markets',
-        'search-data',
-        'coins-id',
-        'trending-search'
+    const openApiLookup: Record<string, OpenAPIV3.OperationObject & { method: string; path: string }> = {}
+    const mcpToolsList: NewToolMethod[] = []
+    const zip: Record<string, { openApi: OpenAPIV3.OperationObject & { method: string; path: string }; mcp: NewToolMethod }> = {}
+
+    // Define the set of allowed tool names based on user input
+    const allowedToolNames = new Set([
+      'get_protocols',
+      'get_v2_chains',
+      'get_v2_historicalChainTvl',
+      'get_v2_historicalChainTvl__by_chain',
+      'get_tvl__by_protocol',
+      'get_stablecoincharts_all',
+      'get_pools',
+      'get_chart__by_pool',
+      'get_overview_dexs',
+      'get_overview_dexs__by_chain',
+      'get_summary_dexs__by_protocol',
+      'get_overview_fees',
+      'get_overview_fees__by_chain',
+      'get_summary_fees__by_protocol'
     ]);
 
-    const openApiLookup: Record<string, OpenAPIV3.OperationObject & { method: string; path: string }> = {}
-    const tools: Record<string, { methods: NewToolMethod[] }> = {
-      [apiName]: { methods: [] },
-    }
-    const zip: Record<string, { openApi: OpenAPIV3.OperationObject & { method: string; path: string }; mcp: NewToolMethod }> = {}
     for (const [path, pathItem] of Object.entries(this.openApiSpec.paths || {})) {
       if (!pathItem) continue
 
       for (const [method, operation] of Object.entries(pathItem)) {
         if (!this.isOperation(method, operation)) continue
 
-        // Filter based on operationId
-        if (!operation.operationId || !allowedOperationIds.has(operation.operationId)) {
-            continue; // Skip this operation if its ID is not in the allowed list
+        // --- Filtering Logic --- 
+        // First, determine the potential tool name
+        let potentialMethodName = operation.operationId;
+        if (!potentialMethodName) {
+          const sanitizedPath = path
+            .replace(/^\/|\/$/g, '')
+            .replace(/\//g, '_')
+            .replace(/\{/g, '_by_')
+            .replace(/\}/g, '');
+          potentialMethodName = `${method.toLowerCase()}_${sanitizedPath}`;
+          console.error(`Operation at ${method} ${path} missing operationId. Generated name: ${potentialMethodName}`);
         }
+
+        // Skip if the potential name is not in the allowed list
+        if (!potentialMethodName || !allowedToolNames.has(potentialMethodName)) {
+            continue; 
+        }
+        // --- End Filtering Logic ---
 
         const mcpMethod = this.convertOperationToMCPMethod(operation, method, path)
         if (mcpMethod) {
           const uniqueName = this.ensureUniqueName(mcpMethod.name)
           mcpMethod.name = uniqueName
-          tools[apiName]!.methods.push(mcpMethod)
-          openApiLookup[apiName + '-' + uniqueName] = { ...operation, method, path }
-          zip[apiName + '-' + uniqueName] = { openApi: { ...operation, method, path }, mcp: mcpMethod }
+          mcpToolsList.push(mcpMethod)
+          openApiLookup[uniqueName] = { ...operation, method, path }
+          zip[uniqueName] = { openApi: { ...operation, method, path }, mcp: mcpMethod }
         }
       }
     }
 
-    return { tools, openApiLookup, zip }
+    return { tools: mcpToolsList, openApiLookup, zip }
   }
 
   /**
@@ -376,12 +395,18 @@ export class OpenAPIToMCPConverter {
   }
 
   private convertOperationToMCPMethod(operation: OpenAPIV3.OperationObject, method: string, path: string): NewToolMethod | null {
-    if (!operation.operationId) {
-      console.warn(`Operation without operationId at ${method} ${path}`)
-      return null
+    let methodName = operation.operationId;
+    if (!methodName) {
+      // Generate a name based on method and path if operationId is missing
+      // Sanitize path: remove leading/trailing slashes, replace other slashes and curly braces with underscores
+      const sanitizedPath = path
+        .replace(/^\/|\/$/g, '') // Remove leading/trailing slashes
+        .replace(/\//g, '_')    // Replace slashes with underscores
+        .replace(/\{/g, '_by_') // Replace opening curly brace with _by_
+        .replace(/\}/g, '');   // Remove closing curly brace
+      methodName = `${method.toLowerCase()}_${sanitizedPath}`;
+      console.error(`Operation at ${method} ${path} missing operationId. Generated name: ${methodName}`);
     }
-
-    const methodName = operation.operationId
 
     const inputSchema: IJsonSchema & { type: 'object' } = {
       $defs: this.convertComponentsToJsonSchema(),
@@ -479,7 +504,7 @@ export class OpenAPIToMCPConverter {
         ...(returnSchema ? { returnSchema } : {}),
       }
     } catch (error) {
-      console.warn(`Failed to generate Zod schema for ${methodName}:`, error)
+      console.error(`Failed to generate Zod schema for ${methodName}:`, error);
       // Fallback to a basic object schema
       return {
         name: methodName,

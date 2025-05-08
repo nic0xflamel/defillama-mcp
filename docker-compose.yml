@@ -1,5 +1,5 @@
 services:
-  coingecko-mcp-server:
+  defillama-mcp-server:
     build: .
     stdin_open: true
     tty: true

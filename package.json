@@ -1,14 +1,14 @@
 {
-  "name": "@nic0xflamel/coingecko-mcp-server",
+  "name": "@nic0xflamel/defillama-mcp-server",
   "keywords": [
-    "coingecko",
+    "defillama",
     "api",
     "mcp",
     "server",
     "crypto",
     "modelcontextprotocol"
   ],
-  "version": "0.1.16",
+  "version": "0.1.0",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -23,7 +23,7 @@
     "watch": "tsc --build --watch"
   },
   "bin": {
-    "coingecko-mcp-server": "./scripts/cli.cjs"
+    "defillama-mcp-server": "./scripts/cli.cjs"
   },
   "files": [
     "bin/",
@@ -60,16 +60,16 @@
     "typescript": "^5.4.5",
     "vitest": "^3.1.1"
   },
-  "description": "MCP server for the CoinGecko API (Public)",
+  "description": "MCP server for the DefiLlama API",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nic0flamel/notion-automation.git"
   },
   "author": "Nic Flamel",
   "bugs": {
-    "url": "https://github.com/nic0xflamel/coingecko-mcp-server/issues"
+    "url": "https://github.com/nic0xflamel/defillama-mcp-server/issues"
   },
-  "homepage": "https://github.com/nic0xflamel/coingecko-mcp-server#readme",
+  "homepage": "https://github.com/nic0xflamel/defillama-mcp-server#readme",
   "volta": {
     "node": "20.11.0"
   }

@@ -23,11 +23,17 @@ type NewToolDefinition = {
   }>
 }
 
+type NewToolMethod = {
+  name: string
+  description: string
+  inputSchema: IJsonSchema & { type: 'object' }
+}
+
 // import this class, extend and return server
 export class MCPProxy {
   private server: Server
   private httpClient: HttpClient
-  private tools: Record<string, NewToolDefinition>
+  private tools: NewToolMethod[]
   private openApiLookup: Record<string, OpenAPIV3.OperationObject & { method: string; path: string }>
 
   constructor(name: string, openApiSpec: OpenAPIV3.Document) {
@@ -56,32 +62,34 @@ export class MCPProxy {
   private setupHandlers() {
     // Handle tool listing
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      const tools: Tool[] = []
+      const mcpTools: Tool[] = []
 
-      // Add methods as separate tools to match the MCP format
-      Object.entries(this.tools).forEach(([toolName, def]) => {
-        def.methods.forEach(method => {
-          const toolNameWithMethod = `${toolName}-${method.name}`;
-          const truncatedToolName = this.truncateToolName(toolNameWithMethod);
-          tools.push({
-            name: truncatedToolName,
+      // Iterate over the flat list of tools
+      this.tools.forEach(method => {
+        // method.name is already the unique, potentially truncated tool name like 'get_protocols'
+        // The truncateToolName call here is a final safety for the 64 char MCP limit, 
+        // though ensureUniqueName in parser should have already handled it.
+        const toolNameForClient = this.truncateToolName(method.name);
+        mcpTools.push({
+          name: toolNameForClient,
             description: method.description,
             inputSchema: method.inputSchema as Tool['inputSchema'],
-          })
         })
       })
 
-      return { tools }
+      return { tools: mcpTools }
     })
 
     // Handle tool calling
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: params } = request.params
+      const { name: toolName, arguments: params } = request.params
 
       // Find the operation in OpenAPI spec
-      const operation = this.findOperation(name)
+      const operation = this.findOperation(toolName)
+
       if (!operation) {
-        throw new Error(`Method ${name} not found`)
+        // Use a more specific JSON-RPC error code if possible, e.g., -32601 Method not found
+        throw new Error(`Method ${toolName} not found`); 
       }
 
       try {
@@ -132,12 +140,12 @@ export class MCPProxy {
     try {
       const headers = JSON.parse(headersJson)
       if (typeof headers !== 'object' || headers === null) {
-        console.warn('OPENAPI_MCP_HEADERS environment variable must be a JSON object, got:', typeof headers)
+        console.error('OPENAPI_MCP_HEADERS environment variable must be a JSON object, got:', typeof headers)
         return {}
       }
       return headers
     } catch (error) {
-      console.warn('Failed to parse OPENAPI_MCP_HEADERS environment variable:', error)
+      console.error('Failed to parse OPENAPI_MCP_HEADERS environment variable:', error)
       return {}
     }
   }

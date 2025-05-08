@@ -27,12 +27,12 @@ FROM node:20-slim
 
 # Copy built package from builder stage
 # COPY specs/coingecko_openapi_v3.json /usr/local/scripts/coingecko-v3-openapi.json # Removed incorrect copy
-COPY --from=builder /usr/local/lib/node_modules/@nic0xflamel/coingecko-mcp-server /usr/local/lib/node_modules/@nic0xflamel/coingecko-mcp-server
-COPY --from=builder /usr/local/bin/coingecko-mcp-server /usr/local/bin/coingecko-mcp-server
-COPY specs/ /usr/local/lib/node_modules/@nic0xflamel/coingecko-mcp-server/specs/
+COPY --from=builder /usr/local/lib/node_modules/@nic0xflamel/defillama-mcp-server /usr/local/lib/node_modules/@nic0xflamel/defillama-mcp-server
+COPY --from=builder /usr/local/bin/defillama-mcp-server /usr/local/bin/defillama-mcp-server
+COPY specs/ /usr/local/lib/node_modules/@nic0xflamel/defillama-mcp-server/specs/
 
 # Set default environment variables
 ENV OPENAPI_MCP_HEADERS="{}"
 
 # Set entrypoint
-ENTRYPOINT ["coingecko-mcp-server"]
+ENTRYPOINT ["defillama-mcp-server"]
