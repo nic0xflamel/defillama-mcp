@@ -10,8 +10,9 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies
-RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts --omit-dev
+# Install dependencies including devDependencies needed for build
+# Smithery will optimize this by separating dev dependencies later if possible.
+RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts
 
 # Copy source code
 COPY . .
@@ -19,20 +20,29 @@ COPY . .
 # Build the package
 RUN --mount=type=cache,target=/root/.npm npm run build
 
-# Install package globally
-RUN --mount=type=cache,target=/root/.npm npm link
-
 # Minimal image for runtime
 FROM node:20-slim
 
-# Copy built package from builder stage
-# COPY specs/coingecko_openapi_v3.json /usr/local/scripts/coingecko-v3-openapi.json # Removed incorrect copy
-COPY --from=builder /usr/local/lib/node_modules/@nic0xflamel/defillama-mcp-server /usr/local/lib/node_modules/@nic0xflamel/defillama-mcp-server
-COPY --from=builder /usr/local/bin/defillama-mcp-server /usr/local/bin/defillama-mcp-server
-COPY specs/ /usr/local/lib/node_modules/@nic0xflamel/defillama-mcp-server/specs/
+# Set working directory
+WORKDIR /app
 
-# Set default environment variables
-ENV OPENAPI_MCP_HEADERS="{}"
+# Copy only necessary production files from builder
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/bin/ ./bin/
+COPY --from=builder /app/scripts/ ./scripts/
+COPY --from=builder /app/specs/ ./specs/
+# If npm run build outputs to a different directory like 'dist' or 'build', ensure that's copied too.
+# Assuming 'npm run build' compiles TypeScript to 'bin/' or similar as per tsconfig.json
 
-# Set entrypoint
-ENTRYPOINT ["defillama-mcp-server"]
+# Install production dependencies
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev --ignore-scripts
+
+# Set default environment variables (if any are universally needed)
+# ENV OPENAPI_MCP_HEADERS="{}" # We removed reliance on this for base URL.
+
+# Expose port if your app listens on one (Smithery might inject PORT)
+# For stdio, this is not strictly for the app, but good practice for platform integration.
+EXPOSE 8080
+
+# Command to run the server
+CMD ["npm", "start"]
