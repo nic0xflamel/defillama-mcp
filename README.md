@@ -22,12 +22,10 @@ Once published to npm, you can configure clients like Cursor to automatically do
     "defillama": { 
       "command": "npx",
       "args": [
-        "-y", // Ensures the latest version is used without prompting
+        "-y",
         "@nic0xflamel/defillama-mcp-server"
-        // Add any server-specific arguments here if needed in the future
       ]
     }
-    // ... other servers
   }
 }
 ```

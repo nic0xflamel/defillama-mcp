@@ -189,7 +189,9 @@ export class OpenAPIToMCPConverter {
       'get_summary_dexs__by_protocol',
       'get_overview_fees',
       'get_overview_fees__by_chain',
-      'get_summary_fees__by_protocol'
+      'get_summary_fees__by_protocol',
+      'get_prices_current__by_coins',
+      'get_protocol__by_protocol'
     ]);
 
     for (const [path, pathItem] of Object.entries(this.openApiSpec.paths || {})) {
