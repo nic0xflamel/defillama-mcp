@@ -1,5 +1,5 @@
 # DefiLlama MCP Server
-[![smithery badge](https://smithery.ai/badge/@nic0xflamel/defillama-mcp-server)](https://smithery.ai/server/@nic0xflamel/defillama-mcp-server)
+[![LightNow capabilities](https://lightnow.ai/badge/io.github.nic0xflamel/defillama-mcp)](https://lightnow.ai/servers/io.github.nic0xflamel/defillama-mcp)
 
 This package provides a Model Context Protocol (MCP) server that acts as a proxy to the public DefiLlama API. It allows AI assistants (like Cursor) to interact with the DefiLlama API through the defined OpenAPI specification.
 
